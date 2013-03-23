@@ -1,0 +1,35 @@
+#views-exposed-form-location-map-page label {
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  padding-bottom: 15px;
+  padding-top: 15px;
+}
+#views-exposed-form-location-map-page div.form-item {
+  display: inline;
+  line-height: 40px;
+}
+#views-exposed-form-location-map-page div.trigger {
+  background-image: url(plus.png);
+  background-position: 0 3px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  display: inline;
+  height: 11px;
+  margin-right: 3px;
+  padding-left: 11px;
+  position: relative;
+  width: 11px;
+}
+#views-exposed-form-location-map-page ul li {
+  list-style: none;
+}
+#views-exposed-form-location-map-page div.trigger.expanded {
+  background-image: url(minus.png);
+}
+#views-exposed-form-location-map-page ul ul {
+  display: none;
+  padding-left: 20px;
+}
+.block #views-exposed-form-location-map-page ul {
+  margin-left: 0;
+}

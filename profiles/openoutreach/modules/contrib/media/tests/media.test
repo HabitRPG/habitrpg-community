@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Tests for media.module.
+ */
+
+/**
+ * Defines base class for media test cases.
+ */
+class MediaTestHelper extends DrupalWebTestCase {
+  function setUp() {
+    parent::setUp(array('media', 'file_entity'));
+  }
+}

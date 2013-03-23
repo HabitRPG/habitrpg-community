@@ -1,0 +1,100 @@
+<?php
+// $Id$ 
+
+/**
+ * @file
+ * Install file for media_browser_plus.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function media_browser_plus_install() {
+  // Make sure the standard 'field_tags' field exists.
+  _media_browser_plus_ensure_field_tags();
+}
+
+/**
+ * Make sure the field_tags field exists and is of the right type.
+ */
+function _media_browser_plus_ensure_field_tags() {
+  $t = get_t();
+  // Make sure the 'tags' vocabulary exists.
+  $vocabulary = taxonomy_vocabulary_machine_name_load('tags');
+  if (!$vocabulary) {
+    $description = st('Use tags to group articles on similar topics into categories.');
+    $help = st('Enter a comma-separated list of words to describe your content.');
+    $vocabulary = (object) array(
+      'name' => 'Tags',
+      'description' => $description,
+      'machine_name' => 'tags',
+      'help' => $help,
+    );
+    taxonomy_vocabulary_save($vocabulary);
+  }
+
+  $field = array(
+    'field_name' => 'field_tags',
+    'type' => 'taxonomy_term_reference',
+    // Set cardinality to unlimited for tagging.
+    'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    'settings' => array(
+      'allowed_values' => array(
+        array(
+          'vocabulary' => $vocabulary->machine_name,
+          'parent' => 0,
+        ),
+      ),
+    ),
+  );
+  _media_browser_plus_ensure_field($field);
+  
+  /** 
+   * This code creates a tags field on install.
+   * I'm not sure why we never had it in this module.  w/o it the module is pretty useless...
+   * Leaving it out there in the interests of BC.  With it on, the module still functions.
+   
+  $instance = array(
+    'field_name' => 'field_tags',
+    'label' => $t('Tags'),
+    'widget' => array(
+      'type' => 'taxonomy_autocomplete',
+    ),
+    'display' => array(
+      'default' => array('type' => 'hidden'),
+    )
+  );
+  _media_browser_plus_ensure_instance($instance);
+   *
+   **/
+}
+
+/**
+ * Create a field, unless it exists already.
+ *
+ * Note that it's not necessary to check field type here, as that's done in the
+ * requirements step.
+ *
+ * @param $field
+ *   The field definition.
+ */
+function _media_browser_plus_ensure_field($field) {
+  $existing_field = field_info_field($field['field_name']);
+  if (empty($existing_field)) {
+    field_create_field($field);
+  }
+}
+
+function _media_browser_plus_ensure_instance($instance) {
+  foreach (media_type_get_types() as $bundle => $type) {
+    $instance_copy = $instance;
+    $instance_copy += array(
+      'entity_type' => 'file',
+      'bundle' => $bundle,
+    );
+    $existing_instance = field_info_instance('file', $instance_copy['field_name'], $bundle);
+    if (empty($existing_instance)) {
+      field_create_instance($instance_copy);
+    }
+  }
+}

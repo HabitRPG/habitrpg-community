@@ -1,0 +1,19 @@
+name = RedHen Notes
+description = Defines the base note entity and features.
+package = RedHen
+core = 7.x
+
+dependencies[] = redhen
+dependencies[] = taxonomy
+dependencies[] = text
+
+; Classes
+files[] = lib/redhen_note.entity.inc
+files[] = lib/redhen_note.metadata.inc
+
+; Information added by drupal.org packaging script on 2013-02-06
+version = "7.x-1.0"
+core = "7.x"
+project = "redhen"
+datestamp = "1360191746"
+

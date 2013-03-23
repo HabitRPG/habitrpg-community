@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * Install file for debut_event. Includes creation of tags vocabulary.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function debut_event_install() {
+  // Set captcha to event comment form.
+  module_load_include('inc', 'captcha');
+  captcha_set_form_id_setting('comment_node_event_form', 'default');
+}
+
+/**
+ * Implements hook_enable().
+ */
+function debut_event_enable() {
+  // Rebuild the features static caches.
+  features_include(TRUE);
+
+  $module = 'debut_event';
+  $feature = feature_load($module);
+  // Retain the order of component types, which is needed for example to ensure
+  // that user roles are created ahead of user permissions that reference them.
+  $items[$module] = array_keys(array_intersect_key(features_get_components(), $feature->info['features']));
+  _features_restore('enable', $items);
+  _features_restore('rebuild', $items);
+}
+
+/**
+ * Enable the Apps compatible, Better exposed filters, and Date iCal modules.
+ */
+function debut_event_update_7000() {
+  $modules = array(
+    'apps_compatible' => 'Apps compatible',
+    'better_exposed_filters' => 'Better exposed filters',
+    'date_ical' => 'Date iCal',
+  );
+  foreach ($modules as $machine_name => $human_name) {
+    if (!module_exists($machine_name) && !module_enable(array($machine_name))) {
+      // No localization in an update function.
+      throw new Exception('This version of Debut Event requires the <a href="http://drupal.org/project/' . $machine_name . '">' . $human_name . '</a> module but it could not be enabled.');
+    }
+  }
+}
+

@@ -1,0 +1,27 @@
+.node-event.node-teaser .field-name-field-content-image img {
+  float: right;
+  margin-left: 15px;
+  margin-bottom: 15px;
+  border: 1px solid #C0C0C0;
+}
+
+.node-event .field-type-image {
+  clear: both;
+  float: right;
+  margin-left: 12px;
+  margin-bottom: 12px;
+}
+
+.view-event-calendar .bef-select-as-checkboxes .form-item {
+  float: left;
+  margin-right: 10px;
+
+}
+
+.view-event-calendar .bef-select-as-checkboxes .form-item label {
+  font-weight: normal;
+}
+
+.view-event-calendar .views-exposed-form {
+  margin-bottom: 10px;
+}

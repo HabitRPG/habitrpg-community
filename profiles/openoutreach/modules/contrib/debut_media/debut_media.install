@@ -1,0 +1,105 @@
+<?php
+
+/**
+ * @file
+ * Install file for debut media. Includes field and instance definitions.
+ * Based on approaches from media gallery.
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function debut_media_enable() {
+  // Rebuild the features static caches.
+  features_include(TRUE);
+
+  $module = 'debut_media';
+  $feature = feature_load($module);
+  // Retain the order of component types, which is needed for example to ensure
+  // that user roles are created ahead of user permissions that reference them.
+  $items[$module] = array_keys(array_intersect_key(features_get_components(), $feature->info['features']));
+  _features_restore('enable', $items);
+  _features_restore('rebuild', $items);
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function debut_media_requirements() {
+  $requirements = array();
+  $t = get_t();
+
+  // If this module is part of an install profile, its requirements may be
+  // checked before the field system is available. The rest of this function is
+  // unneeded anyway in that case, so bail out here to avoid fatal errors.
+  if (!module_exists('field')) {
+    return $requirements;
+  }
+
+  $required_fields = _debut_media_controlled_fields();
+  // In addition to the fields we control, we also need the standard field_tags
+  // that most sites will have gotten from their install profile.
+  $required_fields['field_tags'] = array('type' => 'taxonomy_term_reference');
+
+  foreach ($required_fields as $field_name => $field_definition) {
+    $field = field_info_field($field_name);
+    // If the field doesn't exist, we will create it on install.
+    if (!$field) {
+      continue;
+    }
+    if ($field['type'] != $field_definition['type']) {
+      $requirements['existing_field_' . $field_name] = array(
+        'description' => $t("%field_name already exists and is not of type %type. Installation cannot continue. Please remove this field or change its type.", array('%field_name' => $field_name, '%type' => $field_definition['type'])),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+  return $requirements;
+}
+
+/**
+ * Returns definitions for fields this module both creates and deletes.
+ *
+ * @see _media_gallery_controlled_fields().
+ */
+function _debut_media_controlled_fields() {
+  $fields = array(
+    // Fields to create on media items.
+    'media_description' => array(
+      'field_name' => 'media_description',
+      'locked' => TRUE,
+      'type' => 'text_long',
+      'translatable' => TRUE,
+    ),
+    // No longer created by debut_media but left so that it will be deleted
+    // on uninstall from legacy sites.
+    'media_title' => array(
+      'field_name' => 'media_title',
+      'locked' => TRUE,
+      'type' => 'text',
+      'translatable' => TRUE,
+    ),
+  );
+
+  return $fields;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function debut_media_uninstall() {
+  // Delete fields and instances.
+  foreach (array_keys(_debut_media_controlled_fields()) as $field) {
+    field_delete_field($field);
+  }
+}
+
+/**
+ * Enable the Apps compatible module.
+ */
+function debut_media_update_7000() {
+  if (!module_exists('apps_compatible') && !module_enable(array('apps_compatible'))) {
+    throw new Exception('This version of Debut Media requires the Apps compatible module but it could not be enabled.');
+  }
+}
+

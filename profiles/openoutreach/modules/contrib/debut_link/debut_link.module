@@ -1,0 +1,33 @@
+<?php
+/**
+ * @file
+ * Code for the Debut Link feature.
+ */
+
+include_once('debut_link.features.inc');
+
+/**
+ * Implements hook_init().
+ */
+function debut_link_init() {
+  drupal_add_css(drupal_get_path('module', 'debut_link') . '/debut_link.css');
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ *
+ * Add an action link to 'node/add/link' on 'link' page.
+ */
+function debut_link_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  if ($root_path == 'link') {
+    $item = menu_get_item('node/add/link');
+    if ($item['access']) {
+      $item['title'] = t('Add a new link');
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      );
+    }
+  }
+}
+

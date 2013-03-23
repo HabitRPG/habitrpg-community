@@ -1,0 +1,166 @@
+<?php
+
+/**
+ * @file
+ * Schema and installation hooks for redhen_org module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function redhen_org_schema() {
+  $schema['redhen_org'] = array(
+    'description' => 'The base table for redhen_org module.',
+    'fields' => array(
+      'org_id' => array(
+        'description' => 'The primary identifier for a redhen_org.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The {redhen_org_type}.type of this redhen_org.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'name' => array(
+        'description' => 'The machine-readable name of this redhen_org.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '', //@TODO remove when machine names are implemented
+      ),
+      'label' => array(
+        'description' => 'The label of this redhen_org, always treated as non-markup plain text.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'author_uid' => array(
+        'description' => 'The uid of the user who created this redhen_org.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'primary_contact_id' => array(
+        'description' => 'The redhen_contact.contact_id of the primary contact.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'redhen_state' => array(
+        'description' => 'The redhen_state of this redhen_org.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the redhen_org was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'updated' => array(
+        'description' => 'The Unix timestamp when the redhen_org was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'redhen_org_updated' => array('updated'),
+      'redhen_org_created' => array('created'),
+      'redhen_org_type' => array(array('type', 4)),
+      'redhen_org_redhen_state' => array('redhen_state'),
+    ),
+    'unique keys' => array(
+      'org_id' => array('org_id'),
+      //'name' => array('name'), @TODO uncomment when machine names implemented
+    ),
+    'foreign keys' => array(
+      'redhen_org_author' => array(
+        'table' => 'users',
+        'columns' => array('author_uid' => 'uid'),
+      ),
+      'redhen_org_type' => array(
+        'table' => 'redhen_org_type',
+        'columns' => array('type' => 'name'),
+      ),
+      'redhen_org_primary_contact_id' => array(
+        'table' => 'redhen_contact',
+        'columns' => array('primary_contact_id' => 'contact_id'),
+      ),
+    ),
+    'primary key' => array('org_id'),
+  );
+
+  $schema['redhen_org_type'] = array(
+    'description' => 'Stores information about all defined org types.',
+    'fields' => array(
+      'org_type_id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique org type ID.',
+      ),
+      'name' => array(
+        'description' => 'The machine-readable name of this org type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this org type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'The weight of this org type in relation to others.',
+      ),
+      'locked' => array(
+        'description' => 'A boolean indicating whether the administrator may delete this type.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data related to this org type.',
+        'merge' => TRUE,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        // Set the default to ENTITY_CUSTOM without using the constant as it is
+        // not safe to use it at this point.
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('org_type_id'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
+  );
+
+  return $schema;
+}

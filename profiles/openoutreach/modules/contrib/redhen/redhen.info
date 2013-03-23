@@ -1,0 +1,20 @@
+name = RedHen
+description = Defines basic functionality common to all parts of the RedHen CRM.
+package = RedHen
+core = 7.x
+
+dependencies[] = entity (>=1)
+
+files[] = includes/redhen.admin.inc
+files[] = includes/redhen.forms.inc
+
+configure = admin/config/redhen
+
+php = 5.3
+
+; Information added by drupal.org packaging script on 2013-02-06
+version = "7.x-1.0"
+core = "7.x"
+project = "redhen"
+datestamp = "1360191746"
+

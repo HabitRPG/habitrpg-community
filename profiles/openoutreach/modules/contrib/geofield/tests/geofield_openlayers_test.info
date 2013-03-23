@@ -1,0 +1,17 @@
+name = "Geofield/Openlayers Integration tests"
+description = "Integration tests for Geofield and Openlayers"
+core = 7.x
+hidden = TRUE
+package = Testing
+
+dependencies[] = geofield
+dependencies[] = openlayers
+
+files[] = geofield_openlayers.test
+
+; Information added by drupal.org packaging script on 2013-01-13
+version = "7.x-2.0-alpha2+6-dev"
+core = "7.x"
+project = "geofield"
+datestamp = "1358082078"
+

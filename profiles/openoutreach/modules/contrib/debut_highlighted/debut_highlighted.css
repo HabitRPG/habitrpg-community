@@ -1,0 +1,127 @@
+/* Facilitate responsive carousel. */
+div.view-highlighted div.view-content div,
+div.view-highlighted div.view-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+div.view-highlighted .views-slideshow-overlay {
+  left: 0px;
+  right: 0px;
+  width: auto;
+  height: auto;
+  position: absolute;
+  bottom: 6px;
+  padding: 15px;
+  /* Fallback for web browsers that doesn't support RGBa */
+  background: rgb(0, 0, 0);
+  /* RGBa with 0.30 opacity */
+  background: rgba(0, 0, 0, 0.30);
+  color: #fff;
+}
+
+@media only screen and (max-width: 480px) {
+  div.view-highlighted .views-slideshow-overlay {
+    position: inherit;
+    clear: both;
+    bottom: inherit;
+  }
+  div.view-highlighted .views-slideshow-overlay h2 {
+    font-size: 100%;
+  }
+  div.view-highlighted .views-slideshow-overlay h4 {
+    display: none;
+  }
+}
+
+div.view-highlighted .views-slideshow-overlay h2,
+div.view-highlighted .views-slideshow-overlay h4 {
+  color: #fff;
+}
+
+.view-highlighted .skin-default {
+  position: relative;
+}
+
+div.view-highlighted .views-slideshow-overlay a,
+div.view-highlighted .views-slideshow-overlay a:link,
+div.view-highlighted .views-slideshow-overlay a:active,
+div.view-highlighted .views-slideshow-overlay a:visited {
+  color: #fff;
+}
+
+div.view-highlighted .views-slideshow-overlay h4 {
+  font-size: 110%;
+}
+
+div.view-highlighted .views-slideshow-pager-fields {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 99;
+  font-size: 115%;
+  padding: 15px;
+}
+
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item a,
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item a:link,
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item a:active,
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item a:visited {
+  color: #ddd;
+  padding: 3px;
+  border-radius: 8px;
+  -moz-border-radius: 8px;
+  -webkit-border-radius: 8px;
+  background-color: #000;
+  text-decoration: none !important;
+}
+
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item.active,
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item.active a,
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item.active a:link,
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item.active a:active,
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item.active a:visited {
+  color: #fff;
+  font-weight: bold;
+}
+
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item a:hover {
+  text-decoration: none;
+}
+
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item a:hover {
+  background-color: #888;
+}
+
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item {
+  margin-right: 8px;
+  float: left;
+}
+
+div.view-highlighted .views-slideshow-pager-fields .views-slideshow-pager-field-item:last-child {
+  margin-right: 0px;
+}
+
+div.view-highlighted a.views-slideshow-button {
+  float: right;
+  text-align: center;
+  background-color: #777;
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  color: #fff;
+  font-size: 0.9em;
+  padding: 0.35em 0.75em;
+  text-decoration: none !important;
+}
+
+div.view-highlighted a.views-slideshow-button:hover {
+  background-color: #555;
+  text-decoration: none;
+}
+
+.views-slideshow-overlay h2, .views-slideshow-overlay h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+

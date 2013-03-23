@@ -1,0 +1,53 @@
+.field-type-redhen-email .redhen-fields-email-formatter-row,
+.redhen-fields-email-formatter-row {
+  clear: both;
+  overflow: auto;
+  width: 100%
+}
+
+.field-type-redhen-email .legend {
+  font-weight: bold;
+  font-size: .85em;
+}
+
+.redhen-fields-email-formatter-row {
+  margin-bottom: 1em;
+}
+
+.field-type-redhen-email .email-address {
+  float: left;
+  width: 300px;
+}
+
+.field-type-redhen-email .email-label {
+  float: left;
+  width: 100px;
+}
+
+.field-type-redhen-email .bulk-label,
+.redhen-fields-email-formatter-row .bulk-label,
+.field-type-redhen-email .hold-label,
+.redhen-fields-email-formatter-row .hold-label {
+  float: left;
+  width: 100px;
+}
+
+.field-type-redhen-email .primary-label {
+  float: left;
+}
+
+.field-type-redhen-email .form-type-checkbox,
+.field-type-redhen-email .form-type-select,
+.field-type-redhen-email .form-type-textfield {
+  float: left;
+  margin-right: 1%;
+}
+
+.field-type-redhen-email .form-type-select label {
+  display: inline;
+}
+
+/* Hide the email address label in the table view */
+.field-type-redhen-email .form-type-textfield label {
+  display: none;
+}

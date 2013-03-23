@@ -1,0 +1,81 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the text module.
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function redhen_fields_field_schema($field) {
+  switch ($field['type']) {
+    case 'redhen_email':
+      $columns = array(
+        'value' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+        'hold' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'default' => 0,
+        ),
+        'bulk' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'default' => 0,
+        ),
+      );
+      break;
+  }
+  $columns += array(
+    'default' => array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'default' => 0,
+    ),
+    'label_id' => array(
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'default' => 0,
+    ),
+  );
+  return array(
+    'columns' => $columns,
+    'indexes' => array(),
+  );
+}
+
+/**
+ * Implements hook_install().
+ */
+function redhen_fields_install() {
+  // Clear the field cache so the redhen_email type is found
+  field_cache_clear();
+
+  // if the field doesn't already exist, create required email field to be used with contacts
+  $prior_field = field_read_field(REDHEN_CONTACT_EMAIL_FIELD, array('include_inactive' => TRUE));
+  if (empty($prior_field)) {
+    $email_field = array(
+      'field_name' => REDHEN_CONTACT_EMAIL_FIELD,
+      'type' => 'redhen_email',
+      'locked' => TRUE,
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'settings' => array(
+        'labels' => array(
+          1 => 'home',
+          2 => 'work')
+      )
+    );
+    field_create_field($email_field);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function redhen_fields_uninstall() {
+  field_delete_field(REDHEN_CONTACT_EMAIL_FIELD);
+}
