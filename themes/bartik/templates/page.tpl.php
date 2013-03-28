@@ -87,7 +87,7 @@
 ?>
 <div id="page-wrapper"><div id="page">
 
-<?php include 'habitrpgheader.php'; ?>
+<?php include 'habitrpgheader.html'; ?>
 
   <div id="header" class="<?php print $secondary_menu ? 'with-secondary-menu': 'without-secondary-menu'; ?>"><div class="section clearfix">
 
