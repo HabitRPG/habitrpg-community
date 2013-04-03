@@ -1,0 +1,8 @@
+<?php
+
+/**
+ * Remove the breadcrumbs, they don't do anything for us right now (without this we'd have to remove it from template
+ */
+function habitrpg_menu_breadcrumb_alter(&$active_trail, $item){
+    $active_trail = array();
+}

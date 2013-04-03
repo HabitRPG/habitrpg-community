@@ -1,0 +1,5 @@
+name = HabitRPG
+description = "HabitRPG Customizations Module"
+core = 7.x
+
+files[] = faq.module
