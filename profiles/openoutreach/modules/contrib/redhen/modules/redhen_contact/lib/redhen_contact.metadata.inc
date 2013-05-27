@@ -12,10 +12,25 @@
  */
 class RedhenContactMetadataController extends EntityDefaultMetadataController {
 
+  /**
+   * Overrides entityPropertyInfo().
+   *
+   * @return array
+   */
   public function entityPropertyInfo() {
     $info = parent::entityPropertyInfo();
     $properties = &$info[$this->type]['properties'];
 
+    $properties['type'] = array(
+      'label' => t('Type'),
+      'description' => t('The type of the contact.'),
+      'type' => 'token',
+      'setter callback' => 'entity_property_verbatim_set',
+      'setter permission' => 'administer redhen contacts',
+      'options list' => 'redhen_contact_type_options_list',
+      'required' => TRUE,
+      'schema field' => 'type',
+    );
     $properties['email'] = array(
       'label' => t("Default email"),
       'description' => t("The default email for this contact."),
@@ -43,6 +58,7 @@ class RedhenContactMetadataController extends EntityDefaultMetadataController {
     $properties['first_name'] = array_merge($properties['first_name'], array(
       'label' => t('First name'),
       'filter' => TRUE,
+      'required' => TRUE,
       'field_type' => 'textfield',
       'setter callback' => 'entity_property_verbatim_set',
     ));
@@ -54,6 +70,7 @@ class RedhenContactMetadataController extends EntityDefaultMetadataController {
     ));
     $properties['last_name'] = array_merge($properties['last_name'], array(
       'label' => t('Last name'),
+      'required' => TRUE,
       'filter' => TRUE,
       'field_type' => 'textfield',
       'setter callback' => 'entity_property_verbatim_set',
@@ -75,20 +92,22 @@ class RedhenContactMetadataController extends EntityDefaultMetadataController {
       'field_type' => 'select',
       'options list' => 'redhen_state_options',
       'setter callback' => 'entity_property_verbatim_set',
+      'required' => TRUE,
     ));
 
-    // Entities
+    // Entities.
     $properties['user'] = array(
       'label' => t("User"),
       'type' => 'user',
       'description' => t("The Drupal user associated with the contact."),
       'getter callback' => 'redhen_contact_property_user_get',
+      'setter callback' => 'redhen_contact_property_user_set',
     );
     $properties['author'] = array(
       'label' => t("Author"),
       'type' => 'user',
       'description' => t("The author of the contact record."),
-      'schema field' => 'author_uid'
+      'schema field' => 'author_uid',
     );
 
     return $info;

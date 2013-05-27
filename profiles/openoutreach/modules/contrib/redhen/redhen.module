@@ -5,10 +5,12 @@
  * Defines basic functionality common to all parts of the Redhen CRM.
  */
 
-// Definitions
 define('REDHEN_STATE_ACTIVE', 1);
 define('REDHEN_STATE_ARCHIVED', 0);
 
+/**
+ * Implements hook_menu().
+ */
 function redhen_menu() {
   $items = array();
 
@@ -67,13 +69,27 @@ function redhen_admin_menu_output_build(&$content) {
     if (isset($items['redhen'])) {
       // Peg position to that of the admin/people menu item.
       if (isset($content['menu']['admin/people'])) {
-	      $items['redhen']['#weight'] = $content['menu']['admin/people']['#weight'];
+        $items['redhen']['#weight'] = $content['menu']['admin/people']['#weight'];
       }
       // Change title from "CRM Dashboard". No need for t() here because it's a
       // product name.
       $items['redhen']['#title'] = 'RedHen';
       $content['menu']['redhen'] = $items['redhen'];
     }
+  }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function redhen_admin_paths() {
+  // Set RedHen admin paths based on configuration.
+  if (variable_get('redhen_admin_path', FALSE)) {
+    $paths = array(
+      'redhen' => TRUE,
+      'redhen/*' => TRUE,
+    );
+    return $paths;
   }
 }
 
@@ -128,70 +144,75 @@ function redhen_theme() {
         'item_attributes' => array(0 => ''),
         'classes' => '',
         'attributes' => '',
-      )
+      ),
     ),
-    'redhen_home' => array('items' => NULL)
+    'redhen_home' => array('items' => NULL),
   );
 }
 
 /**
- * Theme function for redhen properties. Simple wrapper around theme_field
- * that sets default values and ensures proeprties render consistently with
- * fields.
+ * Theme function for redhen properties.
+ *
+ * Simple wrapper around theme_field that sets default values and ensures
+ * properties render consistently with fields.
  */
 function theme_redhen_property_field($variables) {
   return theme_field($variables);
 }
 
 /**
- * Executes a filter query return a result set filtered by the provided
- * attributes. Used to filter Redhen entity list pages.
+ * Executes a filter query against the provided attributes.
+ *
+ * Used to filter Redhen entity list pages.
  *
  * @param string $entity_type
+ *   Entity type to filter by,
  * @param array $header
  *   Header array for sorting. Should match the table header used in output.
  * @param string $bundle
+ *   Entity bundle.
  * @param array $properties
+ *   Associative array of key/value pairs.
  * @param array $fields
+ *   Entity fields to filter by.
  * @param int $items_page
+ *   Results per page.
  *
  * @return array
+ *   Executed query object.
  */
 function redhen_filter_query($entity_type, $header, $bundle = '', $properties = array(), $fields = array(), $items_page = 10) {
   $query = new EntityFieldQuery();
 
-  // build the query
   $query
     ->entityCondition('entity_type', $entity_type, '=')
     ->tablesort($header)
     ->pager($items_page);
 
-  // set the bundle
   if (!empty($bundle)) {
     $query->entityCondition('bundle', $bundle, '=');
   }
 
-  // add property filters
+  // Add property filters.
   foreach ($properties as $key => $value) {
-
     $property_info = entity_get_all_property_info($entity_type);
     if ($value != '') {
-      //Processing for date ranges
+      // Processing for date ranges.
       if ($property_info[$key]['type'] == 'date') {
         if ($value['from'] != '') {
           $conditions = array(
             strtotime($value['from']),
-            // Add 24 hours for full day search
+            // Add 24 hours for full day search.
             strtotime($value['to']) + 86400,
           );
           $query->propertyCondition($key, $conditions, 'BETWEEN');
         }
       }
       else {
-        // NULL operator will allow literal or array for $value
+        // NULL operator will allow literal or array for $value.
         $operator = NULL;
         if (isset($property_info[$key]['filter_operator']) && !is_array($value)) {
-          $operator =  $property_info[$key]['filter_operator'];
+          $operator = $property_info[$key]['filter_operator'];
         }
         $query->propertyCondition($key, $value, $operator);
       }
@@ -219,7 +240,7 @@ function redhen_filter_query($entity_type, $header, $bundle = '', $properties = 
         foreach ($field[LANGUAGE_NONE][0] as $column => $value) {
           // Accommodate the skip option introduced in redhen_filter_form().
           if ($value != 'skip') {
-            $query->fieldCondition($key, $column, (int)$value, '=', $key);
+            $query->fieldCondition($key, $column, (int) $value, '=', $key);
           }
         }
         break;
@@ -241,20 +262,28 @@ function redhen_filter_query($entity_type, $header, $bundle = '', $properties = 
 }
 
 /**
- * Helper to return an array of Redhen entity types keyed by entity type, value
- * of the entity path. Useful for defining menu callbacks.
+ * Return an array of Redhen entity types useful for defining menu callbacks.
  *
  * @return array
+ *   Associative array keyed by entity type, with a value of the entity path.
  */
 function redhen_entity_types() {
-  return array(
+  $types = array(
     'redhen_org' => 'org',
-    'redhen_contact' => 'contact'
+    'redhen_contact' => 'contact',
   );
+  $active = array();
+  foreach ($types as $key => $type) {
+    if (module_exists($key)) {
+      $active[$key] = $type;
+    }
+  }
+
+  return $active;
 }
 
 /**
- * Callback to return an array of options for redhen states
+ * Callback to return an array of options for redhen states.
  */
 function redhen_state_options() {
   return array(
@@ -264,11 +293,13 @@ function redhen_state_options() {
 }
 
 /**
- * Theme handler for Redhen landing page
+ * Theme handler for Redhen landing page.
  *
- * @param $variables
+ * @param array $variables
+ *   Variables to theme.
  *
  * @return array
+ *   Render array.
  */
 function theme_redhen_home($variables) {
   $items = $variables['items'];
@@ -283,14 +314,14 @@ function theme_redhen_home($variables) {
       '#theme' => 'image',
       '#path' => $path . '/misc/redhen_logo.png',
       '#alt' => t('Redhen CRM'),
-      '#attributes' => array('id' => 'redhen-logo')
+      '#attributes' => array('id' => 'redhen-logo'),
     ),
     'links' => array(
       '#theme' => 'item_list',
-      '#items' => $list
+      '#items' => $list,
     ),
     '#attached' => array(
-      'css' => array($path . '/misc/redhen.css')
+      'css' => array($path . '/misc/redhen.css'),
     )
   );
 
@@ -299,32 +330,35 @@ function theme_redhen_home($variables) {
 
 /**
  * Implements hook_help().
- *
- * @param $path
- * @param $arg
- *
- * @return string
  */
 function redhen_help($path, $arg) {
   switch ($path) {
     case 'redhen':
     case 'admin/help#redhen':
-      return '<p>' . t('<a href="@redhen">RedHen CRM</a> is an open source CRM <em>framework</em> built natively in <a href="@drupal">Drupal</a>. RedHen CRM is packed with <a href="@wikipedia_ams">association management</a> (AMS) features for managing detailed information on contacts and organizations, membership services, event registrations, and constituent engagement.', array('@redhen' => 'http://drupal.org/project/redhen', '@drupal' => 'http://drupal.org', '@wikipedia_ams' => 'http://en.wikipedia.org/wiki/Association_management_system')) . '</p>';
+      return '<p>' . t(
+        '<a href="@redhen">RedHen CRM</a> is an open source CRM <em>framework</em> built natively in <a href="@drupal">Drupal</a>. RedHen CRM is packed with <a href="@wikipedia_ams">association management</a> (AMS) features for managing detailed information on contacts and organizations, membership services, event registrations, and constituent engagement.',
+        array(
+          '@redhen' => 'http://drupal.org/project/redhen',
+          '@drupal' => 'http://drupal.org',
+          '@wikipedia_ams' => 'http://en.wikipedia.org/wiki/Association_management_system',
+        )) . '</p>';
   }
 }
 
 /**
  * Consistent date formats for RedHen. Used in all tabular listings.
  *
- * @param $timestamp
+ * @param int $timestamp
+ *   Timestamp to format.
  *
  * @return string
+ *   Formatted date.
  */
 function redhen_format_date($timestamp, $type = 'short') {
   if ($timestamp >= strtotime("today")) {
     $date = t("Today at !date", array('!date' => date('g:ia', $timestamp)));
   }
-  else  if ($timestamp >= strtotime("yesterday")) {
+  elseif ($timestamp >= strtotime("yesterday")) {
     $date = t("Yesterday at !date", array('!date' => date('g:ia', $timestamp)));
   }
   else {

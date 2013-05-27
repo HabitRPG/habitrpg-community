@@ -50,7 +50,7 @@ function redhen_org_type_form($form, &$form_state, $redhen_org_type, $op = 'edit
     '#weight' => 40,
   );
 
-  if (!$redhen_org_type->locked && $op != 'add') {
+  if (!$redhen_org_type->locked && $op == 'edit') {
     $form['actions']['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete organization type'),

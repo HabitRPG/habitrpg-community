@@ -11,7 +11,6 @@ class RedhenOrg extends Entity {
 
   public
     $label = '',
-    $name = '',
     $org_id = NULL,
     $primary_contact_id = NULL,
     $author_uid = NULL,

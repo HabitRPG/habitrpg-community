@@ -560,11 +560,11 @@ function redhen_activity_activity_page($entity = NULL, $entity_type = NULL) {
   }
 
   $messages = array();
+  $rows = array();
   if ($result) {
     $messages = message_load_multiple(array_keys($result['message']));
 
     if (!empty($messages)) {
-      $rows = array();
       foreach ($messages as $message) {
         $message_type = message_type_load($message->type);
         $author = $message->user();

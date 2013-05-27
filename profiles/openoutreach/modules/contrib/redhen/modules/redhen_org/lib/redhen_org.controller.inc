@@ -24,10 +24,25 @@ class RedhenOrgEntityController extends EntityAPIController {
     try {
       $org->updated = REQUEST_TIME;
 
+      // New org, set created prop.
+      if (isset($org->is_new) && $org->is_new) {
+        $org->created = REQUEST_TIME;
+      }
+      // Set revision flags. By default, save a new revision and set it as
+      // default.
+      else {
+        if (!isset($org->is_new_revision)) {
+          $org->is_new_revision = TRUE;
+        }
+        if (!isset($contact->default_revision)) {
+          $org->default_revision = TRUE;
+        }
+      }
       parent::save($org, $transaction);
 
       return $org;
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
       $transaction->rollback();
       watchdog_exception($this->entityType, $e);
       throw $e;
@@ -60,7 +75,8 @@ class RedhenOrgEntityController extends EntityAPIController {
       $transaction = db_transaction();
       try {
         parent::delete($org_ids, $transaction);
-      } catch (Exception $e) {
+      }
+      catch (Exception $e) {
         if (isset($transaction)) {
           $transaction->rollback();
         }

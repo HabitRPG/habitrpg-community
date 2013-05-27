@@ -6,9 +6,9 @@ dependencies[] = content_access
 dependencies[] = rules
 files[] = content_access.rules.inc
 
-; Information added by drupal.org packaging script on 2013-01-22
-version = "7.x-1.2-beta1+10-dev"
+; Information added by drupal.org packaging script on 2013-04-15
+version = "7.x-1.2-beta2"
 core = "7.x"
 project = "content_access"
-datestamp = "1358858714"
+datestamp = "1366014321"
 

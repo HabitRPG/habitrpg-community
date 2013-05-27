@@ -12,6 +12,12 @@
  */
 class RedhenEngagementMetadataController extends EntityDefaultMetadataController {
 
+  /**
+   * Override parent to define entity propery metadat for engagements.
+   *
+   * @return array
+   *   Associative array of entity properties.
+   */
   public function entityPropertyInfo() {
     $info = parent::entityPropertyInfo();
     $properties = &$info[$this->type]['properties'];
@@ -25,7 +31,6 @@ class RedhenEngagementMetadataController extends EntityDefaultMetadataController
       'filter' => TRUE,
       'field_type' => 'textfield',
     );
-
     // Entities.
     $properties['entity'] = array(
       'label' => t("Source entity"),
@@ -35,22 +40,21 @@ class RedhenEngagementMetadataController extends EntityDefaultMetadataController
       'getter callback' => 'redhen_engagement_property_source_get',
       'setter callback' => 'entity_property_verbatim_set',
     );
-
     $properties['contact'] = array(
       'label' => t("Contact"),
       'type' => 'redhen_contact',
       'description' => t("The redhen_contact this engagement applies to."),
       'schema field' => 'contact_id',
       'setter callback' => 'entity_property_verbatim_set',
+      'required' => TRUE,
     );
-
     $properties['author'] = array(
       'label' => t("Author"),
       'type' => 'user',
       'description' => t("The author of the note."),
       'schema field' => 'author_uid',
+      'required' => TRUE,
     );
-
     $properties['engagement_score'] = array(
       'label' => t('Engagement score'),
       'type' => 'redhen_engagement_score',
@@ -58,9 +62,10 @@ class RedhenEngagementMetadataController extends EntityDefaultMetadataController
       'description' => t('The engagement score.'),
       'options list' => 'redhen_engagement_score_options',
       'setter callback' => 'entity_property_verbatim_set',
-      // RedHen specific attributes
+      // RedHen specific attributes.
       'field_type' => 'select',
       'filter' => TRUE,
+      'required' => TRUE,
     );
 
     return $info;

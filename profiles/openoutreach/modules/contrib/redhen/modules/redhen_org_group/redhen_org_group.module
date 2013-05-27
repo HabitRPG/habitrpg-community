@@ -200,18 +200,20 @@ function redhen_org_group_contact_groups($account, $private = FALSE, $bundle = N
     }
   }
 
-  // get all orgs a user authored
-  $query = new EntityFieldQuery();
-  $result = $query
-    ->entityCondition('entity_type', 'redhen_org')
-    ->entityCondition('bundle', $group_types, 'IN')
-    ->propertyCondition('redhen_state', REDHEN_STATE_ACTIVE)
-    ->propertyCondition('author_uid', $account->uid)
-    ->execute();
-  if ($result) {
-    $orgs = redhen_org_load_multiple(array_keys($result['redhen_org']));
-    foreach ($orgs as $org) {
-      $account_groups[$org->org_id] = $org;
+  if ($account->uid > 0) {
+    // If not anonymous, get all orgs a user authored
+    $query = new EntityFieldQuery();
+    $result = $query
+      ->entityCondition('entity_type', 'redhen_org')
+      ->entityCondition('bundle', $group_types, 'IN')
+      ->propertyCondition('redhen_state', REDHEN_STATE_ACTIVE)
+      ->propertyCondition('author_uid', $account->uid)
+      ->execute();
+    if ($result) {
+      $orgs = redhen_org_load_multiple(array_keys($result['redhen_org']));
+      foreach ($orgs as $org) {
+        $account_groups[$org->org_id] = $org;
+      }
     }
   }
 

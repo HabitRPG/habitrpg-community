@@ -9,7 +9,6 @@
  * Returns the form to filter redhen entity lists.
  */
 function redhen_filter_form($form, &$form_state, $entity_type) {
-  // add jquery libs and
   drupal_add_library('system', 'ui.datepicker');
   drupal_add_js(drupal_get_path('module', 'redhen') . '/misc/redhen.forms.js');
 
@@ -19,31 +18,30 @@ function redhen_filter_form($form, &$form_state, $entity_type) {
       '#type' => 'fieldset',
       '#title' => t('Filters'),
       '#collapsible' => TRUE,
-      // expand fieldset if the list was filtered
-      '#collapsed' => (empty($_GET['properties']) && empty($_GET['fields']) && empty($_GET['bundle']))
+      '#collapsed' => (empty($_GET['properties']) && empty($_GET['fields']) && empty($_GET['bundle'])),
     );
 
     $form['filter_fieldset']['filters'] = array(
       '#type' => 'container',
-      '#tree' => TRUE
+      '#tree' => TRUE,
     );
 
     $form['filter_fieldset']['filters']['properties'] = array(
       '#type' => 'container',
     );
 
-    // add a form field for each property
+    // Add a form field for each property.
     foreach ($property_info as $key => $prop) {
       if (isset($prop['filter']) && $prop['filter']) {
         $field_type = isset($prop['field_type']) ? $prop['field_type'] : $prop['type'];
 
-        // convert datetime defaults to date strings
+        // Convert datetime defaults to date strings.
         $default_value = isset($_GET['properties'][$key]) ? $_GET['properties'][$key] : NULL;
         if ($prop['type'] == 'date' && !empty($default_value)) {
           $default_value['from'] = ($default_value['from'] == '') ? '' :
-            date('m/d/Y', strtotime($default_value['from']));
+            format_date(strtotime($default_value['from']), 'medium', 'm/d/Y');
           $default_value['to'] = ($default_value['to'] == '') ? '' :
-            date('m/d/Y', strtotime($default_value['to']));
+            format_date(strtotime($default_value['to']), 'medium', 'm/d/Y');
         }
 
         if ($prop['type'] == 'date') {
@@ -51,13 +49,13 @@ function redhen_filter_form($form, &$form_state, $entity_type) {
             '#type' => $field_type,
             '#title' => t('@label from', array('@label' => $prop['label'])),
             '#attributes' => array('class' => array("redhen-field-type-{$prop['type']}")),
-            '#default_value' => $default_value['from']
+            '#default_value' => $default_value['from'],
           );
           $form['filter_fieldset']['filters']['properties'][$key]['to'] = array(
             '#type' => $field_type,
             '#title' => t('@label to', array('@label' => $prop['label'])),
             '#attributes' => array('class' => array("redhen-field-type-{$prop['type']}")),
-            '#default_value' => $default_value['to']
+            '#default_value' => $default_value['to'],
           );
         }
         else {
@@ -65,7 +63,7 @@ function redhen_filter_form($form, &$form_state, $entity_type) {
             '#type' => $field_type,
             '#title' => check_plain($prop['label']),
             '#attributes' => array('class' => array("redhen-field-type-{$prop['type']}")),
-            '#default_value' => $default_value
+            '#default_value' => $default_value,
           );
         }
 
@@ -76,14 +74,14 @@ function redhen_filter_form($form, &$form_state, $entity_type) {
       }
     }
 
-    // add bundles; will load additional field filters on change
+    // Add bundles; will load additional field filters on change.
     $type_options = array('' => t('-- Any --'));
     $entity_info = entity_get_info($entity_type);
     foreach ($entity_info['bundles'] as $key => $bundle) {
       $type_options[$key] = $bundle['label'];
     }
 
-    // single bundle, just load fields
+    // Single bundle, just load fields.
     if (count($entity_info['bundles']) == 1) {
       $bundle = array_keys($entity_info['bundles']);
       $bundle = $bundle[0];
@@ -103,30 +101,30 @@ function redhen_filter_form($form, &$form_state, $entity_type) {
           'progress' => array(
             'type' => 'throbber',
             'message' => t('Retrieving fields for this @entity_type type.',
-              array('@entity_type' => $entity_info['label']))
-          )
-        )
+              array('@entity_type' => $entity_info['label'])),
+          ),
+        ),
       );
       $form['filter_fieldset']['filters']['fields'] = array(
         '#prefix' => '<div id="redhen_filter_fields_container">',
-        '#suffix' => '</div>'
+        '#suffix' => '</div>',
       );
     }
 
     $form['filter_fieldset']['submit'] = array(
       '#type' => 'submit',
-      '#value' => t('Apply')
+      '#value' => t('Apply'),
     );
 
     $form['filter_fieldset']['reset'] = array(
       '#type' => 'submit',
       '#value' => t('Reset'),
       '#limit_validation_errors' => array(),
-      '#submit' => array('redhen_filter_form_reset')
+      '#submit' => array('redhen_filter_form_reset'),
     );
   }
 
-  // add the fields on an ajax type change event or if a filter is being passed
+  // Add the fields on an ajax type change event or if a filter is being passed.
   if (!empty($form_state['values']['filters']['bundle']) || isset($_GET['bundle'])) {
     $bundle = !empty($form_state['values']['filters']['bundle']) ?
       $form_state['values']['filters']['bundle'] : $_GET['bundle'];
@@ -146,12 +144,9 @@ function redhen_filter_fields_callback($form, $form_state) {
 
 /**
  * Validation callback for filter form.
- *
- * @param $form
- * @param $form_state
  */
 function redhen_filter_form_validate($form, &$form_state) {
-  //Todo: Date validation?
+  // Todo: Date validation?
 }
 
 /**
@@ -172,10 +167,14 @@ function redhen_filter_form_reset($form, &$form_state) {
 /**
  * Populate a form array with field filters for given bundle.
  *
- * @param $form
- * @param $form_state
- * @param $entity_type
- * @param $bundle
+ * @param array $form
+ *   Form to alter.
+ * @param array $form_state
+ *   Form state to alter.
+ * @param string $entity_type
+ *   Entity type.
+ * @param string $bundle
+ *   Bundle.
  */
 function redhen_filter_form_fields(&$form, &$form_state, $entity_type, $bundle) {
   $fields = field_info_instances($entity_type, $bundle);

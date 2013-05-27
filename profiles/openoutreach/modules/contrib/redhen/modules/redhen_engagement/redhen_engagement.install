@@ -147,6 +147,28 @@ function redhen_engagement_schema() {
 }
 
 /**
+ * Implements hook_install().
+ */
+function redhen_engagement_install() {
+  // Add an engagement score field to redhen_contact.
+  $field = array(
+    'description' => 'The total engagement score for a contact.',
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field('redhen_contact', 'engagement_score', $field);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function redhen_engagement_uninstall() {
+  // Drop engagement score field from redhen_contact.
+  db_drop_field('redhen_contact', 'engagement_score');
+}
+
+/**
  * Change engagement_score_id from int to varchar/change column name.
  *
  * Required to use machine names for engagement scores.
@@ -173,4 +195,22 @@ function redhen_engagement_update_7100(&$sandbox) {
       ->condition('engagement_score', $score->engagement_score_id)
       ->execute();
   }
+}
+
+/**
+ * Add an engagement_score field to {redhen_contact}.
+ *
+ * Set the engagement_score value for existing contacts.
+ */
+function redhen_engagement_update_7101(&$sandbox) {
+  $field = array(
+    'description' => 'The total engagement score for a contact.',
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+  );
+  db_add_field('redhen_contact', 'engagement_score', $field);
+
+  $sql = 'UPDATE redhen_contact rc SET engagement_score = (SELECT SUM(score) FROM redhen_engagement re JOIN redhen_engagement_score res on re.engagement_score = res.name WHERE re.contact_id = rc.contact_id)';
+  db_query($sql);
 }

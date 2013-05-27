@@ -23,15 +23,18 @@ function metatag_context_context_overview() {
         l('Delete', 'admin/config/search/metatags/context/' . $context->name . '/delete', array('query' => array('destination' => 'admin/config/search/metatags/context'))),
       );
       $rows[] = array(
-          $context->name,
-          implode(', ', $context->conditions['path']['values']),
-          implode(' | ', $ops),
+        $context->name,
+        isset($context->conditions['path']) ? htmlspecialchars(implode(', ', $context->conditions['path']['values'])) : t('No path condition.'),
+        implode(' | ', $ops),
       );
     }
   }
   return theme('table', array('header' => $header, 'rows' => $rows, 'caption' => $caption));
 }
 
+/**
+ * FormAPI callback to build the 'config_add' form.
+ */
 function metatag_context_config_add_form($form, &$form_state) {
   $form['name'] = array(
     '#title' => 'Name',
@@ -56,6 +59,9 @@ function metatag_context_config_add_form($form, &$form_state) {
   return $form;
 }
 
+/**
+ * FormAPI callback to validate the 'edit_name' field.
+ */
 function metatag_context_edit_name_validate($element, &$form_state) {
   // Check for string identifier sanity.
   if (!preg_match('!^[a-z0-9_-]+$!', $element['#value'])) {
@@ -72,6 +78,9 @@ function metatag_context_edit_name_validate($element, &$form_state) {
   }
 }
 
+/**
+ * FormAPI callback to save the 'edit_name' form.
+ */
 function metatag_context_config_add_form_submit($form, &$form_state) {
   $context = metatag_context_load_default_context();
   $context->name = $form_state['values']['name'];
@@ -79,6 +88,9 @@ function metatag_context_config_add_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/config/search/metatags/context/' . $context->name;
 }
 
+/**
+ * FormAPI callback to build the edit form.
+ */
 function metatag_context_config_edit_form($form, &$form_state, $context) {
   $form_state['metatag_context']['context'] = $context;
 
@@ -94,7 +106,7 @@ function metatag_context_config_edit_form($form, &$form_state, $context) {
 
   $form['paths'] = array(
     '#title' => 'Path',
-    '#description' => 'Set this metatag context when any of the paths above match the page path. Put each path on a separate line. You can use the <code>*</code> character (asterisk) as a wildcard and the <code>~</code> character (tilde) to exclude one or more paths. Use <code>&lt;front&gt;</code> for the site front page.',
+    '#description' => t('Set this metatag context when any of the paths above match the page path. Put each path on a separate line. You can use the <code>*</code> character (asterisk) as a wildcard and the <code>~</code> character (tilde) to exclude one or more paths. Use <code>&lt;front&gt;</code> for the site front page. Only local paths (e.g. "example/page") will work, do not use relative URLs ("/example/page") or absolute URLs ("http://example.com/example/page").'),
     '#type' => 'textarea',
     '#default_value' => isset($context->conditions['path']['values']) ? html_entity_decode(implode('&#13;&#10;', $context->conditions['path']['values'])) : '',
     '#required' => 1,
@@ -137,24 +149,21 @@ function metatag_context_config_edit_form($form, &$form_state, $context) {
     '#value' => t('Save'),
   );
   $form['actions']['cancel'] = array(
-    '#type' => 'submit',
-    '#value' => t('Cancel'),
-    '#submit' => array('metatag_context_config_edit_form_cancel_submit'),
-    '#limit_validation_errors' => array(),
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => isset($_GET['destination']) ? $_GET['destination'] : 'admin/config/search/metatags/context',
   );
   $form['#submit'][] = 'metatag_context_config_edit_form_submit';
 
   return $form;
 }
 
-function metatag_context_config_edit_form_cancel_submit($form, &$form_state) {
-  context_delete($form_state['metatag_context']['context']);
-  $form_state['redirect'] = 'admin/config/search/metatags/context';
-}
-
+/**
+ * FormAPI callback for the final submission.
+ */
 function metatag_context_config_edit_form_submit($form, &$form_state) {
   $context = $form_state['metatag_context']['context'];
-  $context->reactions['metatag_context_reaction']['metatags'] = array_merge($context->reactions['metatag_context_reaction']['metatags'], $form_state['values']['metatags']);
+  $context->reactions['metatag_context_reaction']['metatags'] = $form_state['values']['metatags'];
   $paths = explode("\n", str_replace("\r", "", $form_state['values']['paths']));
   $paths = array_combine($paths, $paths);
   $context->conditions['path']['values'] = $paths;
@@ -162,6 +171,9 @@ function metatag_context_config_edit_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/config/search/metatags/context';
 }
 
+/**
+ * FormAPI callback to build the 'delete' form.
+ */
 function metatag_context_delete_form($form, &$form_state, $context) {
   $form_state['metatag_context']['context'] = $context;
 
@@ -184,11 +196,20 @@ function metatag_context_delete_form($form, &$form_state, $context) {
   return $form;
 }
 
+/**
+ * FormAPI submission callback for the 'delete' form.
+ */
 function metatag_context_delete_form_submit($form, &$form_state) {
   context_delete($form_state['metatag_context']['context']);
   $form_state['redirect'] = 'admin/config/search/metatags/context';
 }
 
+/**
+ * Create a default Metatag-focused context.
+ *
+ * @return object
+ *   A context structure in the form of a StdClass object.
+ */
 function metatag_context_load_default_context() {
   $context = new stdClass();
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */

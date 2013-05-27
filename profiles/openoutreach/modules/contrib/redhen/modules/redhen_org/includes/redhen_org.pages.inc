@@ -49,11 +49,11 @@ function redhen_org_page() {
   }
 
   $orgs = array();
+  $rows = array();
   if ($result) {
     $orgs = redhen_org_load_multiple(array_keys($result['redhen_org']));
 
     if (!empty($orgs)) {
-      $rows = array();
       $destination = drupal_get_destination();
       foreach ($orgs as $org) {
         $uri = entity_uri('redhen_org', $org);

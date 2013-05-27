@@ -32,15 +32,14 @@ class RedhenNoteMetadataController extends EntityDefaultMetadataController {
       'schema field' => 'updated',
       'setter callback' => 'entity_property_verbatim_set'
     );
-
     // Entities.
     $properties['author'] = array(
       'label' => t("Author entity"),
       'type' => 'user',
       'description' => t("The author of the note."),
       'schema field' => 'author_uid',
+      'required' => TRUE
     );
-
     $properties['entity'] = array(
       'label' => t("Host entity"),
       'type' => 'entity',
@@ -48,6 +47,7 @@ class RedhenNoteMetadataController extends EntityDefaultMetadataController {
       'description' => t("The host entity."),
       'getter callback' => 'redhen_note_property_host_get',
       'setter callback' => 'entity_property_verbatim_set',
+      'required' => TRUE
     );
 
     return $info;

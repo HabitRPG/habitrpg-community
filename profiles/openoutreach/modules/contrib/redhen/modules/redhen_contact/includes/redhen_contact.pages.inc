@@ -41,6 +41,16 @@ function redhen_contact_page() {
     ),
   );
 
+  $include_engagements = module_exists('redhen_engagement');
+  if ($include_engagements) {
+    $header['engagement_score'] = array(
+      'field' => 'engagement_score',
+      'type' => 'property',
+      'data' => t('Engagement Score'),
+      'specifier' => 'engagement_score',
+    );
+  }
+
   $header['operations'] = array('data' => t('Operations'));
 
   // Need to ensure the query doesn't execute when posing the form.
@@ -72,7 +82,7 @@ function redhen_contact_page() {
             '#title' => $contact->first_name,
             '#href' => $uri['path'],
           ),
-         ),
+        ),
         'last_name' => array(
           'data' => array(
             '#type' => 'link',
@@ -89,6 +99,11 @@ function redhen_contact_page() {
         ),
         'updated' => redhen_format_date($contact->updated, 'short'),
       );
+
+      if ($include_engagements) {
+        $rows[$contact->contact_id]['engagement_score'] = $contact->engagement_score;
+      }
+
       // Build a list of all the accessible operations for the current contact.
       $ops = array();
       if (redhen_contact_access('update', $contact)) {

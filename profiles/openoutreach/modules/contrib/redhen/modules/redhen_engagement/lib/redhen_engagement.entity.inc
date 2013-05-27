@@ -21,10 +21,15 @@ class RedhenEngagement extends Entity {
     $author_uid,
     $created;
 
+  /**
+   * Override parent constructor.
+   *
+   * @param array $values
+   *   Associative array of entity values.
+   */
   public function __construct(array $values = array()) {
     parent::__construct($values, 'redhen_engagement');
 
-    // New engagement. is_new might not be set so check for id
     if (!$this->engagement_id) {
       $this->created = REQUEST_TIME;
     }
@@ -38,10 +43,32 @@ class RedhenEngagement extends Entity {
   }
 
   /**
-   * Specifify URI
+   * Specifify URI.
    */
   protected function defaultUri() {
     return array('path' => 'redhen/engagement/' . $this->engagement_id);
+  }
+
+  /**
+   * Override parent to update a contacts engagement score.
+   *
+   * @throws Exception
+   */
+  public function save() {
+    $transaction = db_transaction();
+    $ret = entity_get_controller($this->entityType)->save($this, $transaction);
+    if ($ret) {
+      try {
+        $contact = redhen_contact_load($this->contact_id);
+        $contact->engagement_score = redhen_engagement_contact_score($contact);
+        $contact->save();
+      }
+      catch (Exception $e) {
+        $transaction->rollback();
+        watchdog_exception($this->entityType, $e);
+        throw $e;
+      }
+    }
   }
 
 }

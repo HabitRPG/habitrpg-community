@@ -65,7 +65,6 @@ class DrupalDefaultMetaTag implements DrupalMetaTagInterface {
     return array(
       '#attached' => array('drupal_add_html_head' => array(array($element, $element['#id']))),
     );
-    return $element;
   }
 }
 
@@ -95,15 +94,20 @@ class DrupalTextMetaTag extends DrupalDefaultMetaTag {
   }
 
   public function getValue(array $options = array()) {
+    $name = "metatag:" . $options["instance"] . ":" . $this->info["name"];
+
     $options += array(
       'token data' => array(),
       'clear' => TRUE,
-      'sanitize' => FALSE,
+      'sanitize' => TRUE,
       'raw' => FALSE,
     );
 
-    $value = $this->data['value'];
+    $value = metatag_translate($name, $this->data['value']);
     if (empty($options['raw'])) {
+      // Give other modules the opportunity to use hook_metatag_pattern_alter()
+      // to modify defined token patterns and values before replacement.
+      drupal_alter('metatag_pattern', $value, $options['token data']);
       $value = token_replace($value, $options['token data'], $options);
     }
     $value = strip_tags(decode_entities($value));
@@ -142,7 +146,6 @@ class DrupalLinkMetaTag extends DrupalTextMetaTag {
     return array(
       '#attached' => array('drupal_add_html_head' => array(array($element, $element['#id']))),
     );
-    return $element;
   }
 }
 

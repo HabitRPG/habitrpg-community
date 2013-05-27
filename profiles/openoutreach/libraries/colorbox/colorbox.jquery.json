@@ -1,6 +1,6 @@
 {
 	"name": "colorbox",
-	"title": "ColorBox",
+	"title": "Colorbox",
 	"description": "A lightweight customizable lightbox plugin",
 	"keywords": [
 		"modal",
@@ -9,11 +9,11 @@
 		"popup",
 		"ui"
 	],
-	"version": "1.4.3",
+	"version": "1.4.15",
 	"author": {
 		"name": "Jack Moore",
 		"url": "http://www.jacklmoore.com",
-		"email": "jack@colorpowered.com"
+		"email": "hello@jacklmoore.com"
 	},
 	"licenses": [
 		{

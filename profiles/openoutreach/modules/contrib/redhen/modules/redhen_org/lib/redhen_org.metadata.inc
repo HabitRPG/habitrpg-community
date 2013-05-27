@@ -19,13 +19,23 @@ class RedhenOrgMetadataController extends EntityDefaultMetadataController {
     $info = parent::entityPropertyInfo();
     $properties = &$info[$this->type]['properties'];
 
+    $properties['type'] = array(
+      'label' => t('Type'),
+      'description' => t('The type of organization.'),
+      'type' => 'token',
+      'setter callback' => 'entity_property_verbatim_set',
+      'setter permission' => 'administer redhen orgs',
+      'options list' => 'redhen_org_type_options_list',
+      'required' => TRUE,
+      'schema field' => 'type',
+    );
     $properties['label'] = array(
       'label' => t('Organization Name'),
       'filter' => TRUE,
       'field_type' => 'textfield',
       'setter callback' => 'entity_property_verbatim_set',
+      'required' => TRUE,
     ) + $properties['label'];
-
     $properties['created'] = array(
       'label' => t("Created"),
       'description' => t("The date the organization was created."),
@@ -46,8 +56,8 @@ class RedhenOrgMetadataController extends EntityDefaultMetadataController {
       'field_type' => 'select',
       'options list' => 'redhen_state_options',
       'setter callback' => 'entity_property_verbatim_set',
+      'required' => TRUE,
     ));
-
     // Entities.
     $properties['primary_contact'] = array(
       'label' => t("Primary contact"),
@@ -60,6 +70,7 @@ class RedhenOrgMetadataController extends EntityDefaultMetadataController {
       'type' => 'user',
       'description' => t("The author of the organization record."),
       'schema field' => 'author_uid',
+      'required' => TRUE,
     );
 
     return $info;

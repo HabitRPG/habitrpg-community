@@ -18,19 +18,19 @@ function redhen_org_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'revision_id' => array(
+        'description' => 'The current {redhen_org_revision}.revision_id version identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'type' => array(
         'description' => 'The {redhen_org_type}.type of this redhen_org.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'name' => array(
-        'description' => 'The machine-readable name of this redhen_org.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'default' => '', //@TODO remove when machine names are implemented
       ),
       'label' => array(
         'description' => 'The label of this redhen_org, always treated as non-markup plain text.',
@@ -78,9 +78,12 @@ function redhen_org_schema() {
     ),
     'unique keys' => array(
       'org_id' => array('org_id'),
-      //'name' => array('name'), @TODO uncomment when machine names implemented
     ),
     'foreign keys' => array(
+      'redhen_org_revision' => array(
+        'table' => 'redhen_org_revision',
+        'columns' => array('revision_id' => 'revision_id'),
+      ),
       'redhen_org_author' => array(
         'table' => 'users',
         'columns' => array('author_uid' => 'uid'),
@@ -95,6 +98,81 @@ function redhen_org_schema() {
       ),
     ),
     'primary key' => array('org_id'),
+  );
+
+  // Revisions table.
+  $schema['redhen_org_revision'] = array(
+    'description' => 'The revision table for redhen_org module.',
+    'fields' => array(
+      'org_id' => array(
+        'description' => 'The primary identifier for a redhen_org.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'revision_id' => array(
+        'description' => 'The version identifier of this revision.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The label of this redhen_org, always treated as non-markup plain text.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'author_uid' => array(
+        'description' => 'The uid of the user who created this redhen_org.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'primary_contact_id' => array(
+        'description' => 'The redhen_contact.contact_id of the primary contact.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'redhen_state' => array(
+        'description' => 'The redhen_state of this redhen_org.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'log' => array(
+        'description' => 'The log entry explaining the changes in this version.',
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+      ),
+      'updated' => array(
+        'description' => 'The Unix timestamp when the redhen_org was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'redhen_org_updated_revision' => array('updated'),
+      'redhen_org_redhen_state_revision' => array('redhen_state'),
+    ),
+    'foreign keys' => array(
+      'revision_redhen_org' => array(
+        'table' => 'redhen_org',
+        'columns' => array('org_id' => 'org_id'),
+      ),
+      'redhen_org_revision_author' => array(
+        'table' => 'users',
+        'columns' => array('author_uid' => 'uid'),
+      ),
+      'redhen_org_revision_primary_contact_id' => array(
+        'table' => 'redhen_contact',
+        'columns' => array('primary_contact_id' => 'contact_id'),
+      ),
+    ),
+    'primary key' => array('revision_id'),
   );
 
   $schema['redhen_org_type'] = array(
@@ -163,4 +241,139 @@ function redhen_org_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * Create redhen_org_revisions table and populate default initial revisions.
+ */
+function redhen_org_update_7000() {
+  // Add the redhen_org_revision table.
+  $schema = array(
+    'description' => 'The revision table for redhen_org module.',
+    'fields' => array(
+      'org_id' => array(
+        'description' => 'The primary identifier for a redhen_org.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'revision_id' => array(
+        'description' => 'The version identifier of this revision.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The label of this redhen_org, always treated as non-markup plain text.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'author_uid' => array(
+        'description' => 'The uid of the user who created this redhen_org.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'primary_contact_id' => array(
+        'description' => 'The redhen_contact.contact_id of the primary contact.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'redhen_state' => array(
+        'description' => 'The redhen_state of this redhen_org.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'log' => array(
+        'description' => 'The log entry explaining the changes in this version.',
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+      ),
+      'updated' => array(
+        'description' => 'The Unix timestamp when the redhen_org was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'redhen_org_updated_revision' => array('updated'),
+      'redhen_org_redhen_state_revision' => array('redhen_state'),
+    ),
+    'foreign keys' => array(
+      'revision_redhen_org' => array(
+        'table' => 'redhen_org',
+        'columns' => array('org_id' => 'org_id'),
+      ),
+      'redhen_org_revision_author' => array(
+        'table' => 'users',
+        'columns' => array('author_uid' => 'uid'),
+      ),
+      'redhen_org_revision_primary_contact_id' => array(
+        'table' => 'redhen_contact',
+        'columns' => array('primary_contact_id' => 'contact_id'),
+      ),
+    ),
+    'primary key' => array('revision_id'),
+  );
+
+  db_create_table('redhen_org_revision', $schema);
+
+  // Add revision_id column to redhen_org table.
+  db_add_field('redhen_org', 'revision_id', array(
+   'description' => 'The current {redhen_org_revision}.revision_id version identifier.',
+   'type' => 'int',
+   'unsigned' => TRUE,
+   'not null' => TRUE,
+   'default' => 0,
+  ));
+
+  // Initialize the revision_id to be the same as the item_id.
+  db_update('redhen_org')
+    ->expression('revision_id', 'org_id')
+    ->execute();
+
+  // Fill the new table with the correct data.
+  $items = db_select('redhen_org', 'org')
+    ->fields('org')
+    ->execute();
+  foreach ($items as $item) {
+    db_insert('redhen_org_revision')
+      ->fields(array(
+        'revision_id' => $item->revision_id,
+        'org_id' => $item->org_id,
+        'label' => $item->label,
+        'author_uid' => $item->author_uid,
+        'primary_contact_id' => $item->primary_contact_id,
+        'redhen_state' => $item->redhen_state,
+        'updated' => $item->updated,
+      ))
+      ->execute();
+  }
+}
+
+/**
+ * Delete name field from redhen_org.
+ */
+function redhen_org_update_7001() {
+  db_drop_field('redhen_org', 'name');
+  entity_info_cache_clear();
+}
+
+/**
+ * Add default value to the {redhen_org}.revision_id field.
+ */
+function redhen_org_update_7002() {
+  db_change_field('redhen_org', 'revision_id', 'revision_id', array(
+    'description' => 'The current {redhen_org_revision}.revision_id version identifier.',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  ));
 }

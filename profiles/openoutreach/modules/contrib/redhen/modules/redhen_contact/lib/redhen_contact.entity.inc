@@ -21,6 +21,12 @@ class RedhenContact extends Entity {
     $created = '',
     $updated = '';
 
+  /**
+   * Override parent constructor with entity type.
+   *
+   * @param array $values
+   *   Entity values to populate object.
+   */
   public function __construct(array $values = array()) {
     parent::__construct($values, 'redhen_contact');
   }
@@ -32,17 +38,32 @@ class RedhenContact extends Entity {
 
     $wrapper = entity_metadata_wrapper('redhen_contact', $this);
     $user = $wrapper->user->value();
+    $name = $wrapper->full_name->value();
 
     $content['redhen_state'] = array(
-      '#theme' => 'redhen_property_field',
+      '#theme' => 'redhen_pr  operty_field',
       '#label' => t('State'),
       '#items' => array(
         array(
-          '#markup' => ($this->redhen_state == REDHEN_STATE_ACTIVE) ? t('Active') : t('Inactive')
+          '#markup' => ($this->redhen_state == REDHEN_STATE_ACTIVE) ? t('Active') : t('Inactive'),
         ),
       ),
       '#classes' => 'field field-label-inline clearfix',
     );
+
+    if (!empty($name)) {
+      $content['name'] = array(
+        '#theme' => 'redhen_property_field',
+        '#label' => t('Name'),
+        '#items' => array(
+          array(
+            '#markup' => $wrapper->full_name->value(),
+          ),
+        ),
+        '#classes' => 'field field-label-inline clearfix',
+        '#attributes' => '',
+      );
+    }
 
     if ($user) {
       $user_uri = entity_uri('user', $user);
@@ -51,10 +72,11 @@ class RedhenContact extends Entity {
         '#label' => t('Drupal User'),
         '#items' => array(
           array(
-            '#markup' => l($user->name, $user_uri['path'])
+            '#markup' => l($user->name, $user_uri['path']),
           ),
         ),
         '#classes' => 'field field-label-inline clearfix',
+        '#attributes' => '',
       );
     }
 
@@ -73,16 +95,17 @@ class RedhenContact extends Entity {
   }
 
   /**
-   * Specify URI
+   * Specify default URI.
    */
   protected function defaultUri() {
     return array('path' => 'redhen/contact/' . $this->identifier());
   }
 
   /**
-   * Return all emails and their properties in an array..
+   * Return a contacts primary email.
    *
    * @return array
+   *   Email value as an array.
    */
   public function email() {
     $wrapper = entity_metadata_wrapper($this->entityType(), $this);
@@ -93,6 +116,7 @@ class RedhenContact extends Entity {
    * Return all emails and their properties in an array..
    *
    * @return array
+   *   Array of email value arrays.
    */
   public function allEmail() {
     $emails = array();
@@ -105,9 +129,11 @@ class RedhenContact extends Entity {
   /**
    * Determine if contact has a given email.
    *
-   * @param $email
+   * @param string $email
+   *   Email to look for.
    *
    * @return bool
+   *   Whether or not an email exists for a contact.
    */
   public function hasEmail($email) {
     if (!empty($this->{REDHEN_CONTACT_EMAIL_FIELD})) {
@@ -123,11 +149,16 @@ class RedhenContact extends Entity {
   /**
    * Sets an email for a contact.
    *
-   * @param $email
-   * @param int $default
-   * @param int $bulk
-   * @param int $hold
+   * @param string $email
+   *   Email address.
+   * @param bool $default
+   *   If email is default.
+   * @param bool $bulk
+   *   If email is for bulk use.
+   * @param bool $hold
+   *   If email is on hold.
    * @param int $label_id
+   *   Label id.
    */
   public function setEmail($email, $default = 1, $bulk = 1, $hold = 0, $label_id = 0) {
     $this->{REDHEN_CONTACT_EMAIL_FIELD}[LANGUAGE_NONE][] = array(
@@ -135,26 +166,41 @@ class RedhenContact extends Entity {
       'default' => $default,
       'bulk' => $bulk,
       'hold' => $hold,
-      'label_id' => $label_id
+      'label_id' => $label_id,
     );
   }
 
+  /**
+   * Set a contact's Drupal user.
+   *
+   * @return bool
+   *   True on success.
+   */
   public function setUser() {
     return entity_get_controller($this->entityType)->setUser($this);
   }
 
+  /**
+   * Delete or unlink the active user for a contact.
+   *
+   * @param bool $delete
+   *   Flag if contact should unlinked or deleted.
+   *
+   * @return bool
+   *   Trust on success.
+   */
   public function deleteUser($delete) {
     return entity_get_controller($this->entityType)->deleteUser($this, $delete);
   }
 
   /**
-   * Set the redhen_state for a contact
+   * Set the redhen_state for a contact.
    *
-   * @param $state
-   *  The REDHEN_STATE_* value to use
+   * @param int $state
+   *   The REDHEN_STATE_* value to use.
    */
   public function setState($state) {
-    // allow other modules to act on a state change
+    // Allow other modules to act on a state change.
     module_invoke_all('redhen_contact_set_state', $this->redhen_state, $state);
     $this->redhen_state = $state;
     return entity_get_controller($this->entityType)->save($this);
