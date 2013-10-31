@@ -161,7 +161,7 @@ function _webform_render_textfield($component, $value = NULL, $filter = TRUE) {
     $element['#maxlength'] = $component['extra']['maxlength'];
   }
 
-  if (isset($value)) {
+  if (isset($value[0])) {
     $element['#default_value'] = $value[0];
   }
 

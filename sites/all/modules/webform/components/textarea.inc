@@ -125,7 +125,7 @@ function _webform_render_textarea($component, $value = NULL, $filter = TRUE) {
     }
   }
 
-  if (isset($value)) {
+  if (isset($value[0])) {
     $element['#default_value'] = $value[0];
   }
 

@@ -56,15 +56,15 @@ function _webform_edit_email($component) {
     '#size' => 60,
     '#maxlength' => 127,
     '#weight' => 0,
-    '#attributes' => ($component['value'] == '%useremail' && count(form_get_errors()) == 0) ? array('disabled' => TRUE) : array(),
+    '#attributes' => ($component['value'] == '[current-user:mail]' && count(form_get_errors()) == 0) ? array('disabled' => TRUE) : array(),
     '#id' => 'email-value',
   );
   $form['user_email'] = array(
     '#type' => 'checkbox',
     '#title' => t('User email as default'),
-    '#default_value' => $component['value'] == '%useremail' ? 1 : 0,
+    '#default_value' => $component['value'] == '[current-user:mail]' ? 1 : 0,
     '#description' => t('Set the default value of this field to the user email, if he/she is logged in.'),
-    '#attributes' => array('onclick' => 'getElementById("email-value").value = (this.checked ? "%useremail" : ""); getElementById("email-value").disabled = this.checked;'),
+    '#attributes' => array('onclick' => 'getElementById("email-value").value = (this.checked ? "[current-user:mail]" : ""); getElementById("email-value").disabled = this.checked;'),
     '#weight' => 0,
     '#element_validate' => array('_webform_edit_email_validate'),
   );
@@ -103,7 +103,7 @@ function _webform_edit_email($component) {
  */
 function _webform_edit_email_validate($element, &$form_state) {
   if ($form_state['values']['user_email']) {
-    $form_state['values']['value'] = '%useremail';
+    $form_state['values']['value'] = '[current-user:mail]';
   }
 }
 
@@ -136,7 +136,7 @@ function _webform_render_email($component, $value = NULL, $filter = TRUE) {
     $element['#element_validate'][] = 'webform_validate_unique';
   }
 
-  if (isset($value)) {
+  if (isset($value[0])) {
     $element['#default_value'] = $value[0];
   }
 

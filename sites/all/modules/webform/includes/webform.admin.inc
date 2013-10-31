@@ -51,21 +51,21 @@ function webform_admin_settings() {
   $form['email']['webform_default_from_address']  = array(
     '#type' => 'textfield',
     '#title' => t('From address'),
-    '#default_value' => variable_get('webform_default_from_address', variable_get('site_mail', ini_get('sendmail_from'))),
+    '#default_value' => webform_variable_get('webform_default_from_address'),
     '#description' => t('The default sender address for emailed webform results; often the e-mail address of the maintainer of your forms.'),
   );
 
   $form['email']['webform_default_from_name']  = array(
     '#type' => 'textfield',
     '#title' => t('From name'),
-    '#default_value' => variable_get('webform_default_from_name', variable_get('site_name', '')),
+    '#default_value' => webform_variable_get('webform_default_from_name'),
     '#description' => t('The default sender name which is used along with the default from address.'),
   );
 
   $form['email']['webform_default_subject']  = array(
     '#type' => 'textfield',
     '#title' => t('Default subject'),
-    '#default_value' => variable_get('webform_default_subject', t('Form submission from: %title')),
+    '#default_value' => webform_variable_get('webform_default_subject'),
     '#description' => t('The default subject line of any e-mailed results.'),
   );
 

@@ -238,7 +238,7 @@ function theme_webform_results_table($variables) {
 
     // Generate a cell for each component.
     foreach ($node->webform['components'] as $component) {
-      $data = isset($submission->data[$component['cid']]['value']) ? $submission->data[$component['cid']]['value'] : NULL;
+      $data = isset($submission->data[$component['cid']]) ? $submission->data[$component['cid']] : NULL;
       $submission_output = webform_component_invoke($component['type'], 'table', $component, $data);
       if ($submission_output !== NULL) {
         $component_headers[] = check_plain($component['name']);
@@ -442,7 +442,8 @@ function webform_results_download_form($form, &$form_state, $node) {
     '#default_value' => TRUE
   );
 
-  $form['submit'] = array(
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Download'),
   );
@@ -780,7 +781,7 @@ function webform_results_export($node, $format = 'delimited', $options = array()
       if (isset($node->webform['components'][$cid])) {
         $component = $node->webform['components'][$cid];
         // Let each component add its data.
-        $raw_data = isset($submission->data[$cid]['value']) ? $submission->data[$cid]['value'] : NULL;
+        $raw_data = isset($submission->data[$cid]) ? $submission->data[$cid] : NULL;
         if (webform_component_feature($component['type'], 'csv')) {
           $data = webform_component_invoke($component['type'], 'csv_data', $component, $options, $raw_data);
           if (is_array($data)) {

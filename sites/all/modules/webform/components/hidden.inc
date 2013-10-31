@@ -73,8 +73,7 @@ function _webform_render_hidden($component, $value = NULL, $filter = TRUE) {
   // Set filtering options for "value" types, which are not displayed to the
   // end user so they do not need to be sanitized.
   $strict = $component['extra']['hidden_type'] != 'value';
-  $allow_anonymous = $component['extra']['hidden_type'] == 'value';
-  $default_value = $filter ? _webform_filter_values($component['value'], $node, NULL, NULL, $strict, $allow_anonymous) : $component['value'];
+  $default_value = $filter ? _webform_filter_values($component['value'], $node, NULL, NULL, $strict) : $component['value'];
   if (isset($value[0])) {
     $default_value = $value[0];
   }

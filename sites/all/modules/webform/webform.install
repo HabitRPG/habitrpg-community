@@ -182,6 +182,107 @@ function webform_schema() {
     'primary key' => array('nid', 'cid'),
   );
 
+  $schema['webform_conditional'] = array(
+    'description' => 'Holds information about conditional logic.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rgid' => array(
+        'description' => 'The rule group identifier for this group of rules.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'andor' => array(
+        'description' => 'Whether to AND or OR the actions in this group. All actions within the same crid should have the same andor value.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'action' => array(
+        'description' => 'The action to be performed on the target. Typically "show" or "hide" for targets of type "component", and "send" for targets of type "email".',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'target_type' => array(
+        'description' => 'The type of target to be affected. Either "component" or "email". Indicates what type of ID the "target" column contains.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'target' => array(
+        'description' => 'The ID of the target to be affected. Typically a component ID.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'weight' => array(
+        'description' => 'Determines the position of this conditional compared to others.',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid', 'rgid'),
+  );
+
+  $schema['webform_conditional_rules'] = array(
+    'description' => 'Holds information about conditional logic.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rgid' => array(
+        'description' => 'The rule group identifier for this group of rules.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rid' => array(
+        'description' => 'The rule identifier for this conditional rule.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'source_type' => array(
+        'description' => 'The type of source on which the conditional is based. Currently always "component". Indicates what type of ID the "source" column contains.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'source' => array(
+        'description' => 'The component ID being used in this condition.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'operator' => array(
+        'description' => 'Which operator (equal, contains, starts with, etc.) should be used for this comparison between the source and value?',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'value' => array(
+        'description' => 'The value to be compared with source.',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('nid', 'rgid', 'rid'),
+  );
+
   $schema['webform_emails'] = array(
     'description' => 'Holds information regarding e-mails that should be sent upon submitting a webform',
     'fields' => array(
@@ -229,7 +330,7 @@ function webform_schema() {
         'not null' => FALSE,
       ),
       'excluded_components' => array(
-        'description' => 'A list of components that will not be included in the %email_values token. A list of CIDs separated by commas.',
+        'description' => 'A list of components that will not be included in the [submission:values] token. A list of CIDs separated by commas.',
         'type' => 'text',
         'not null' => TRUE,
       ),
@@ -830,4 +931,402 @@ function webform_update_7319(&$sandbox) {
  */
 function webform_update_7320() {
   db_query("UPDATE {file_managed} SET status = 1 WHERE fid IN (SELECT fid FROM {file_usage} WHERE module = :module_name)", array(':module_name' => 'webform'));
+}
+
+/**
+ * Rewrite token replacement system to use D7 tokens.
+ *
+ * If needed, please download and install the Token module from drupal.org.
+ * Otherwise some tokens will not be rendered.
+ */
+function webform_update_7401(&$sandbox) {
+  // Define replacements.
+  $patterns = array(
+    '%username',
+    '%useremail',
+    '%uid',
+    '%date',
+    '%ip_address',
+    '%site',
+    '%nid',
+    '%title',
+    '%email_values',
+    '%submission_url',
+    '%sid',
+    '%server[REQUEST_URI]',
+    '][', // Used to convert nested arrays of %value and %email.
+  );
+  $replacements = array(
+    '[current-user:name]',
+    '[current-user:mail]',
+    '[current-user:uid]',
+    '[submission:date:long]',
+    '[current-user:ip-address]',
+    '[site:name]',
+    '[node:nid]',
+    '[node:title]',
+    '[submission:values]',
+    '[submission:url]',
+    '[submission:sid]',
+    '[current-page:url]',
+    ':', // Replace "][" with ":" for %value and %email.
+  );
+  $dpatterns = array(
+    '/%get\[([^\]]+)\]/m',
+    '/%email\[([^% \n\r\t]+)?\]/m',
+    '/%value\[([^% \n\r\t]+)?\]/m',
+    '/%profile\[([^\]]+)\]/m',
+  );
+  $dreplacements = array(
+    '[current-page:query:$1]',
+    '[submission:values:$1]',
+    '[submission:values:$1:nolabel]',
+    '[current-user:$1]',
+  );
+
+  // Set up the initial batch process.
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['last_nid_processed'] = -1;
+    $sandbox['max'] = db_select('webform')
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+
+    // Update tokens in variables.
+    $variables = array(
+      'webform_default_subject',
+      'webform_default_from_name',
+      'webform_default_from_address',
+    );
+    foreach ($variables as $variable) {
+      $value = variable_get($variable, NULL);
+      if ($value !== NULL) {
+        $value = str_replace($patterns, $replacements, $value);
+        $value = preg_replace($dpatterns, $dreplacements, $value);
+        variable_set($variable, $value);
+      }
+    }
+  }
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $webforms = db_select('webform', 'w')
+    ->fields('w')
+    ->condition('nid', $sandbox['last_nid_processed'], '>')
+    ->orderBy('nid', 'ASC')
+    ->range(0, $limit)
+    ->execute()
+    ->fetchAllAssoc('nid', PDO::FETCH_ASSOC);
+
+  foreach ($webforms as $nid => $webform) {
+    // Update the webform record itself.
+    $original = $webform;
+    $parts = array(
+      'confirmation',
+      'redirect_url',
+    );
+    foreach ($parts as $part) {
+      $webform[$part] = str_replace($patterns, $replacements, $webform[$part]);
+      $webform[$part] = preg_replace($dpatterns, $dreplacements, $webform[$part]);
+    }
+    if ($webform != $original) {
+      drupal_write_record('webform', $webform, array('nid'));
+    }
+
+    // Update tokens in component configurations.
+    $result = db_select('webform_component', 'wc', array('fetch' => PDO::FETCH_ASSOC))
+      ->fields('wc')
+      ->condition('wc.nid', $nid)
+      ->execute();
+    foreach ($result as $component) {
+      $original_extra = $component['extra'];
+      $original_value = $component['value'];
+      $component['extra'] = unserialize($component['extra']);
+      if (isset($component['extra']['description'])) {
+        $description = str_replace($patterns, $replacements, $component['extra']['description']);
+        $description = preg_replace($dpatterns, $dreplacements, $description);
+        $component['extra']['description'] = $description;
+      }
+      $component['extra'] = serialize($component['extra']);
+      $value = str_replace($patterns, $replacements, $component['value']);
+      $value = preg_replace($dpatterns, $dreplacements, $value);
+      $component['value'] = $value;
+      if ($component['extra'] != $original_extra || $component['value'] != $original_value) {
+        drupal_write_record('webform_component', $component, array('nid', 'cid'));
+      }
+    }
+
+    // Update tokens in e-mail configurations.
+    $result = db_select('webform_emails', 'we', array('fetch' => PDO::FETCH_ASSOC))
+      ->fields('we')
+      ->condition('we.nid', $nid)
+      ->execute();
+    foreach ($result as $email) {
+      $original = $email['template'];
+      $template = str_replace($patterns, $replacements, $email['template']);
+      $template = preg_replace($dpatterns, $dreplacements, $template);
+      if ($template != $original) {
+        $email['template'] = $template;
+        drupal_write_record('webform_emails', $email, array('nid', 'eid'));
+      }
+    }
+  }
+
+  // If less than limit was processed, the update process is finished.
+  if (count($webforms) < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    $message = t('Your existing webforms have been upgraded to use the global Drupal 7 token system.');
+    if (!module_exists('token')) {
+      $message .= ' <strong>' . t('Please download and install the <a href="http://drupal.org/project/token" target="_blank">Token module</a>. Otherwise some tokens will not be rendered.') . '</strong>';
+    }
+    return $message;
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+/**
+ * Add the webform_conditional database table.
+ */
+function webform_update_7402() {
+  $schema['webform_conditional'] = array(
+    'description' => 'Holds information about conditional logic.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rgid' => array(
+        'description' => 'The rule group identifier for this group of rules.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'andor' => array(
+        'description' => 'Whether to AND or OR the actions in this group. All actions within the same crid should have the same andor value.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'action' => array(
+        'description' => 'The action to be performed on the target. Typically "show" or "hide" for targets of type "component", and "send" for targets of type "email".',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'target_type' => array(
+        'description' => 'The type of target to be affected. Either "component" or "email". Indicates what type of ID the "target" column contains.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'target' => array(
+        'description' => 'The ID of the target to be affected. Typically a component ID.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'weight' => array(
+        'description' => 'Determines the position of this conditional compared to others.',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid', 'rgid'),
+  );
+
+  $schema['webform_conditional_rules'] = array(
+    'description' => 'Holds information about conditional logic.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a webform.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rgid' => array(
+        'description' => 'The rule group identifier for this group of rules.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'rid' => array(
+        'description' => 'The rule identifier for this conditional rule.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'source_type' => array(
+        'description' => 'The type of source on which the conditional is based. Currently always "component". Indicates what type of ID the "source" column contains.',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'source' => array(
+        'description' => 'The component ID being used in this condition.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'operator' => array(
+        'description' => 'Which operator (equal, contains, starts with, etc.) should be used for this comparison between the source and value?',
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'value' => array(
+        'description' => 'The value to be compared with source.',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('nid', 'rgid', 'rid'),
+  );
+
+  db_create_table('webform_conditional', $schema['webform_conditional']);
+  db_create_table('webform_conditional_rules', $schema['webform_conditional_rules']);
+  // Rebuild schema so that webform_update_7403() can use drupal_write_record().
+  if (db_table_exists('system') && db_field_exists('system', 'status')) {
+    drupal_get_schema(NULL, TRUE);
+  }
+}
+
+/**
+ * Convert per-component conditionals to new more flexible conditional system.
+ */
+function webform_update_7403(&$sandbox) {
+  // Set up the initial batch process.
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['last_nid_processed'] = -1;
+    $sandbox['converted_count'] = 0;
+    $sandbox['max'] = db_select('webform')
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+  }
+
+  $limit = variable_get('webform_update_batch_size', 100);
+  $webforms = db_select('webform', 'w')
+    ->fields('w')
+    ->condition('nid', $sandbox['last_nid_processed'], '>')
+    ->orderBy('nid', 'ASC')
+    ->range(0, $limit)
+    ->execute()
+    ->fetchAllAssoc('nid', PDO::FETCH_ASSOC);
+
+  foreach ($webforms as $nid => $webform) {
+    // Update tokens in component configurations.
+    $result = db_select('webform_component', 'wc', array('fetch' => PDO::FETCH_ASSOC))
+      ->fields('wc')
+      ->condition('wc.nid', $nid)
+      ->execute();
+    $rgid = 0;
+    foreach ($result as $component) {
+      // For each component, check if it has conditional properties that need
+      // to be removed and/or migrated. Because these properties may be in any
+      // order, copy the original extra array for comparison.
+      $component['extra'] = unserialize($component['extra']);
+      $original_extra = $component['extra'];
+
+      // Remove conditional properties if present.
+      if (isset($component['extra']['conditional_component'])) {
+        unset($component['extra']['conditional_component']);
+      }
+      if (isset($component['extra']['conditional_operator'])) {
+        unset($component['extra']['conditional_operator']);
+      }
+      if (isset($component['extra']['conditional_values'])) {
+        unset($component['extra']['conditional_values']);
+
+        // If the component has conditional values specified, that indicates
+        // that this component was conditionally shown. Convert it to a new
+        // conditional with multiple rules if needed.
+        if (strlen(trim($original_extra['conditional_values'])) && !empty($original_extra['conditional_operator']) && !empty($original_extra['conditional_component'])) {
+          $conditional_values = explode("\n", $original_extra['conditional_values']);
+          $rules = array();
+          $rule = array(
+            'nid' => $nid,
+            'rgid' => $rgid,
+            'rid' => NULL,
+            'source_type' => 'component',
+            'source' => $original_extra['conditional_component'],
+            'operator' => 'equal',
+            'value' => NULL,
+          );
+          foreach ($conditional_values as $value) {
+            $value = trim($value);
+            if ($value) {
+              $new_rule = $rule;
+              $new_rule['rid'] = count($rules);
+              $new_rule['value'] = $value;
+              $rules[] = $new_rule;
+            }
+          }
+          if (count($rules)) {
+            $conditional = array(
+              'nid' => $nid,
+              'rgid' => $rgid,
+              'andor' => 'or',
+              'action' => ($original_extra['conditional_operator'] === '=') ? 'show' : 'hide',
+              'target_type' => 'component',
+              'target' => $component['cid'],
+              'weight' => 0,
+            );
+            drupal_write_record('webform_conditional', $conditional);
+            foreach ($rules as $rule) {
+              drupal_write_record('webform_conditional_rules', $rule);
+            }
+            $sandbox['converted_count']++;
+            $rgid++;
+          }
+        }
+      }
+
+      // Update the component with the conditional properties removed.
+      if ($component['extra'] != $original_extra) {
+        $component['extra'] = serialize($component['extra']);
+        drupal_write_record('webform_component', $component, array('nid', 'cid'));
+      }
+    }
+  }
+
+  // If less than limit was processed, the update process is finished.
+  if (count($webforms) < $limit || $sandbox['progress'] == $sandbox['max']) {
+    $finished = TRUE;
+  }
+
+  // If there's no max value then there's nothing to update and we're finished.
+  if (empty($sandbox['max']) || isset($finished)) {
+    return t('@count webforms using conditionals updated to the new conditional system.', array('@count' => $sandbox['converted_count']));
+  }
+  else {
+    // Indicate our current progress to the batch update system.
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+}
+
+/**
+ * Remove files left over from deleted submissions. Such files are now deleted
+ * automatically.
+ */
+function webform_update_7404() {
+  module_load_include('inc', 'webform', 'components/file');
+  $fids = db_query('SELECT fid FROM {file_usage} WHERE module = \'webform\' AND type = \'submission\' AND NOT id IN(SELECT sid FROM {webform_submissions})')->fetchCol();
+  foreach ($fids as $fid) {
+    _webform_delete_file(NULL, array($fid));
+  }
 }
